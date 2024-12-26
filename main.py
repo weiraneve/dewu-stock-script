@@ -48,32 +48,40 @@ def read_dewu(file_path):
     return data
 
 def compare_and_calculate(data_stock, data_dewu):
+    # 创建一个字典来存储得物订单，键为(货号, 规格)组合
+    dewu_dict = {}
+    for row_dewu in data_dewu:
+        key = (row_dewu["商品货号"], row_dewu["规格"])
+        if key not in dewu_dict:
+            dewu_dict[key] = []
+        dewu_dict[key].append(row_dewu)
+
     results = []
     for row_stock in data_stock:
-        for row_dewu in data_dewu:
-            if row_stock["货号"] == row_dewu["商品货号"] and row_stock["尺码"] == row_dewu["规格"]:
-                cost_price = row_stock["成本价"]
-                paid_amount = row_dewu["实付金额"]
+        key = (row_stock["货号"], row_stock["尺码"])
+        if key in dewu_dict:
+            stock = int(row_stock["库存"]) if row_stock["库存"] is not None else 0
+            remaining_stock = stock
 
-                # 确保成本价和实付金额可以参与计算
-                cost_price = float(cost_price) if cost_price is not None else 0
-                paid_amount = float(paid_amount) if paid_amount is not None else 0
-
+            # 处理该商品的所有订单
+            for row_dewu in dewu_dict[key]:
+                cost_price = float(row_stock["成本价"]) if row_stock["成本价"] is not None else 0
+                paid_amount = float(row_dewu["实付金额"]) if row_dewu["实付金额"] is not None else 0
+                
                 difference = round(paid_amount) - round(cost_price)
+                sold_quantity = min(row_dewu["数量"], remaining_stock)
+                remaining_stock -= sold_quantity
 
-                # 确保库存为整数
-                stock = int(row_stock["库存"]) if row_stock["库存"] is not None else 0
-                sold_quantity = row_dewu["数量"]
-                if sold_quantity > stock:
-                    sold_quantity = stock
+                if sold_quantity > 0:
+                    result = row_stock.copy()
+                    result["利润"] = difference
+                    result["库存"] = remaining_stock
+                    result["卖出数量"] = sold_quantity
+                    results.append(result)
 
-                remaining_stock = stock - sold_quantity
+                if remaining_stock <= 0:
+                    break
 
-                result = row_stock.copy()
-                result["利润"] = difference
-                result["库存"] = remaining_stock  # 更新剩余库存
-                result["卖出数量"] = sold_quantity  # 添加卖出数量字段
-                results.append(result)
     return results
 
 def write_to_excel(data, headers, output_path, include_profit):
