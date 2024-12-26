@@ -41,6 +41,7 @@ def read_dewu(file_path):
             continue
         data.append({
             "商品货号": row[3],
+            "数量": row[4],
             "规格": row[5],
             "实付金额": row[57],
         })
@@ -62,8 +63,11 @@ def compare_and_calculate(data_stock, data_dewu):
 
                 # 确保库存为整数
                 stock = int(row_stock["库存"]) if row_stock["库存"] is not None else 0
-                sold_quantity = 1 if stock > 0 else 0  # 假设卖出数量为1
-                remaining_stock = stock - sold_quantity if stock > 0 else 0
+                sold_quantity = row_dewu["数量"]
+                if sold_quantity > stock:
+                    sold_quantity = stock
+
+                remaining_stock = stock - sold_quantity
 
                 result = row_stock.copy()
                 result["利润"] = difference
