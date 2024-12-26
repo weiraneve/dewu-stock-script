@@ -5,12 +5,10 @@ def read_stock(file_path):
     workbook = openpyxl.load_workbook(file_path)
     sheet = workbook.active
 
-    # 定位数据起始行，假设销售订单页的实际数据从第2行开始
     data_start_row = 2
-
     data = []
     for row in sheet.iter_rows(min_row=data_start_row, values_only=True):
-        if row[0] is None:  # 如果第一列为空，跳过无效行
+        if row[0] is None:
             continue
         data.append({
             "仓库": row[0],
@@ -55,9 +53,20 @@ def compare_and_calculate(data_stock, data_dewu):
             if row_stock["货号"] == row_dewu["商品货号"] and row_stock["尺码"] == row_dewu["规格"]:
                 cost_price = row_stock["成本价"]
                 paid_amount = row_dewu["实付金额"]
-                difference = round(float(paid_amount)) - round(float(cost_price))
+
+                # 确保成本价和实付金额可以参与计算
+                cost_price = float(cost_price) if cost_price is not None else 0
+                paid_amount = float(paid_amount) if paid_amount is not None else 0
+
+                difference = round(paid_amount) - round(cost_price)
+
+                # 确保库存为整数
+                stock = int(row_stock["库存"]) if row_stock["库存"] is not None else 0
+                remaining_stock = stock - 1 if stock > 0 else 0
+
                 result = row_stock.copy()
                 result["利润"] = difference
+                result["库存"] = remaining_stock  # 更新库存
                 results.append(result)
     return results
 
@@ -68,7 +77,7 @@ def write_to_excel(data, headers, output_path, include_profit):
 
     # 写入表头
     if include_profit:
-        sheet.append(headers + ["利润"])
+        sheet.append(headers + ["利润", "库存"])
     else:
         sheet.append(headers)
 
@@ -77,6 +86,7 @@ def write_to_excel(data, headers, output_path, include_profit):
         row = [row_data.get(header, "") for header in headers]
         if include_profit:
             row.append(row_data.get("利润", ""))
+            row.append(row_data.get("库存", ""))
         sheet.append(row)
 
     workbook.save(output_path)
@@ -94,13 +104,13 @@ def main():
 
     results = compare_and_calculate(data_stock, data_dewu)
 
-    # 生成“利润结果”文件（包含利润列）
+    # 生成“利润结果”文件（包含利润和库存列）
     write_to_excel(results, headers, output_profit_path, include_profit=True)
 
-    # 生成“导入文件”文件（不包含利润列）
+    # 生成“导入文件”文件（不包含利润列，但库存已更新）
     write_to_excel(results, headers, output_import_path, include_profit=False)
 
-    print(f"文件已生成：\n- {output_profit_path}（包含利润）\n- {output_import_path}（不包含利润）")
+    print(f"文件已生成：\n- {output_profit_path}（包含利润和库存）\n- {output_import_path}（库存已更新，无利润列）")
 
 if __name__ == "__main__":
     main()
