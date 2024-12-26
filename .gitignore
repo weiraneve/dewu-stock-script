@@ -1,0 +1,89 @@
+# Python 缓存文件
+__pycache__/
+stock-monitor/__pycache__/
+monitor/__pycache__/
+*.py[cod]
+*$py.class
+
+# 环境配置文件
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# 数据库文件
+
+# 静态文件和媒体文件
+staticfiles/
+media/
+
+# 虚拟环境文件
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Django 特定文件
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.sql
+*.coverage
+*.cover
+*.hgtags
+*.DS_Store
+*.mo
+*.pid
+*.sock
+
+# Celery beat schedule file
+celerybeat-schedule
+
+# Translations
+*.po
+
+# IPython notebook checkpoints
+.ipynb_checkpoints
+
+# 生成的文档
+docs/_build/
+
+# 系统文件
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*~
+.cache
+*.sublime-project
+*.sublime-workspace
+
+# Backup files
+*.bak
+*.backup
+*.orig
+*.tmp
+*.temp
+
+# IDE 配置文件
+*.iml
+.idea/
+.vscode/
+.project
+.pydevproject
+
+# 环境配置文件
+*.env
+
+# Node.js
+node_modules/
+
+# Pyre type checker
+.pyre/
