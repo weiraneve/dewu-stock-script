@@ -81,7 +81,7 @@ def compare_and_calculate(data_stock, data_dewu):
 
                 if sold_quantity > 0:
                     result = row_stock.copy()
-                    result["利润"] = difference
+                    result["利润"] = difference * sold_quantity
                     result["库存"] = remaining_stock
                     result["卖出数量"] = sold_quantity
                     results.append(result)
