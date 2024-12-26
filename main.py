@@ -1,3 +1,4 @@
+import re
 import openpyxl
 from openpyxl import Workbook
 
@@ -51,14 +52,20 @@ def compare_and_calculate(data_stock, data_dewu):
     # 创建一个字典来存储得物订单，键为(货号, 规格)组合
     dewu_dict = {}
     for row_dewu in data_dewu:
-        key = (row_dewu["商品货号"], row_dewu["规格"])
+        # 提取规格中的数字并转换为字符串
+        size = re.search(r'\d+\.?\d*', str(row_dewu["规格"]))
+        size = size.group() if size else str(row_dewu["规格"])
+        key = (row_dewu["商品货号"], size)
         if key not in dewu_dict:
             dewu_dict[key] = []
         dewu_dict[key].append(row_dewu)
 
     results = []
     for row_stock in data_stock:
-        key = (row_stock["货号"], row_stock["尺码"])
+        # 确保库存中的尺码也是字符串
+        stock_size = str(row_stock["尺码"])
+        key = (row_stock["货号"], stock_size)
+        
         if key in dewu_dict:
             stock = int(row_stock["库存"]) if row_stock["库存"] is not None else 0
             remaining_stock = stock
