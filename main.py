@@ -62,11 +62,13 @@ def compare_and_calculate(data_stock, data_dewu):
 
                 # 确保库存为整数
                 stock = int(row_stock["库存"]) if row_stock["库存"] is not None else 0
-                remaining_stock = stock - 1 if stock > 0 else 0
+                sold_quantity = 1 if stock > 0 else 0  # 假设卖出数量为1
+                remaining_stock = stock - sold_quantity if stock > 0 else 0
 
                 result = row_stock.copy()
                 result["利润"] = difference
-                result["库存"] = remaining_stock  # 更新库存
+                result["库存"] = remaining_stock  # 更新剩余库存
+                result["卖出数量"] = sold_quantity  # 添加卖出数量字段
                 results.append(result)
     return results
 
@@ -77,7 +79,7 @@ def write_to_excel(data, headers, output_path, include_profit):
 
     # 写入表头
     if include_profit:
-        sheet.append(headers + ["利润", "库存"])
+        sheet.append(headers + ["利润", "卖出数量"])
     else:
         sheet.append(headers)
 
@@ -86,7 +88,7 @@ def write_to_excel(data, headers, output_path, include_profit):
         row = [row_data.get(header, "") for header in headers]
         if include_profit:
             row.append(row_data.get("利润", ""))
-            row.append(row_data.get("库存", ""))
+            row.append(row_data.get("卖出数量", ""))
         sheet.append(row)
 
     workbook.save(output_path)
