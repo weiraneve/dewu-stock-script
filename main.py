@@ -1,7 +1,6 @@
 import re
 import openpyxl
 from openpyxl import Workbook
-import tkinter as tk
 from tkinter import filedialog
 
 def read_stock(file_path):
