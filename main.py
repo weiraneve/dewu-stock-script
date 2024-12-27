@@ -1,6 +1,8 @@
 import re
 import openpyxl
 from openpyxl import Workbook
+import tkinter as tk
+from tkinter import filedialog
 
 def read_stock(file_path):
     workbook = openpyxl.load_workbook(file_path)
@@ -113,25 +115,49 @@ def write_to_excel(data, headers, output_path, include_profit):
     workbook.save(output_path)
 
 def main():
-    stock_path = "瑕疵成本对照7.11.xlsx"
-    dewu_path = "24.11.22-12.20大雄得物.xlsx"
+    # 文件选择对话框
+    print("请选择库存文件...")
+    stock_path = filedialog.askopenfilename(
+        title="选择库存文件",
+        filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")]
+    )
+    if not stock_path:
+        print("未选择库存文件，程序退出")
+        return
+
+    print("请选择得物订单文件...")
+    dewu_path = filedialog.askopenfilename(
+        title="选择得物订单文件",
+        filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")]
+    )
+    if not dewu_path:
+        print("未选择得物订单文件，程序退出")
+        return
+
+    # 设置输出文件名（与脚本在同一目录）
     output_profit_path = "利润结果.xlsx"
     output_import_path = "导入文件.xlsx"
 
-    data_stock = read_stock(stock_path)
-    data_dewu = read_dewu(dewu_path)
+    try:
+        data_stock = read_stock(stock_path)
+        data_dewu = read_dewu(dewu_path)
 
-    headers = ["仓库", "商品名称", "货号", "尺码", "成本价", "库存", "当前毒普通价", "价格更新时间", "3.5到手", "4.0到手", "5.0到手", "入库时间", "备注"]
+        headers = ["仓库", "商品名称", "货号", "尺码", "成本价", "库存", 
+                  "当前毒普通价", "价格更新时间", "3.5到手", "4.0到手", 
+                  "5.0到手", "入库时间", "备注"]
 
-    results = compare_and_calculate(data_stock, data_dewu)
+        results = compare_and_calculate(data_stock, data_dewu)
 
-    # 生成“利润结果”文件（包含利润和库存列）
-    write_to_excel(results, headers, output_profit_path, include_profit=True)
+        # 生成输出文件
+        write_to_excel(results, headers, output_profit_path, include_profit=True)
+        write_to_excel(results, headers, output_import_path, include_profit=False)
 
-    # 生成“导入文件”文件（不包含利润列，但库存已更新）
-    write_to_excel(results, headers, output_import_path, include_profit=False)
-
-    print(f"文件已生成：\n- {output_profit_path}（包含利润和库存）\n- {output_import_path}（库存已更新，无利润列）")
+        print(f"\n处理完成！文件已生成：")
+        print(f"- {output_profit_path}（包含利润和库存）")
+        print(f"- {output_import_path}（库存已更新，无利润列）")
+        
+    except Exception as e:
+        print(f"\n发生错误：{e}")
 
 if __name__ == "__main__":
     main()
