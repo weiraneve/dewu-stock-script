@@ -49,13 +49,39 @@ def read_dewu(file_path):
         })
     return data
 
+def get_normalized_size(size_str):
+    special_sizes = {
+        '⅓': '.3',
+        '⅔': '.5',
+    }
+    
+    # 先尝试提取数字部分
+    size = re.search(r'\d+', str(size_str))
+    if not size:
+        return str(size_str)
+    
+    base_size = size.group()
+    
+    # 检查是否有特殊分数
+    for fraction, decimal in special_sizes.items():
+        if fraction in size_str:
+            # 如果是 ⅓，向下取整（比如37⅓ -> 37）
+            if fraction == '⅓':
+                return base_size
+            # 如果是 ⅔，加0.5（比如36⅔ -> 36.5）
+            elif fraction == '⅔' or fraction == '½':
+                return f"{base_size}.5"
+    
+    # 如果没有特殊分数，返回原始数字
+    return base_size
+
 def compare_and_calculate(data_stock, data_dewu):
     # 创建一个字典来存储得物订单，键为(货号, 规格)组合
     dewu_dict = {}
     for row_dewu in data_dewu:
-        # 提取规格中的数字并转换为字符串
-        size = re.search(r'\d+\.?\d*', str(row_dewu["规格"]))
-        size = size.group() if size else str(row_dewu["规格"])
+        # 处理规格
+        size = get_normalized_size(row_dewu["规格"])
+        
         key = (row_dewu["商品货号"], size)
         if key not in dewu_dict:
             dewu_dict[key] = []
@@ -63,8 +89,8 @@ def compare_and_calculate(data_stock, data_dewu):
 
     results = []
     for row_stock in data_stock:
-        # 确保库存中的尺码也是字符串
-        stock_size = str(row_stock["尺码"])
+        # 确保库存中的尺码也使用相同的标准化处理
+        stock_size = get_normalized_size(row_stock["尺码"])
         key = (row_stock["货号"], stock_size)
         
         if key in dewu_dict:
@@ -80,12 +106,11 @@ def compare_and_calculate(data_stock, data_dewu):
                 sold_quantity = min(row_dewu["数量"], remaining_stock)
                 remaining_stock -= sold_quantity
 
-                if sold_quantity > 0:
-                    result = row_stock.copy()
-                    result["利润"] = difference * sold_quantity
-                    result["库存"] = remaining_stock
-                    result["卖出数量"] = sold_quantity
-                    results.append(result)
+                result = row_stock.copy()
+                result["利润"] = difference * sold_quantity
+                result["库存"] = remaining_stock
+                result["卖出数量"] = sold_quantity
+                results.append(result)
 
                 if remaining_stock <= 0:
                     break
