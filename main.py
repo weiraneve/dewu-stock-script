@@ -114,6 +114,8 @@ def compare_and_calculate(data_stock, data_dewu):
 
                 if remaining_stock <= 0:
                     break
+        else:
+            results.append(row_stock)
 
     return results
 
@@ -125,11 +127,14 @@ def write_to_excel(data, headers, output_path, include_profit):
     # 写入表头
     if include_profit:
         sheet.append(headers + ["利润", "卖出数量"])
+        # 只写入有利润数据的记录
+        filtered_data = [row for row in data if "利润" in row and row["利润"] != 0]
     else:
         sheet.append(headers)
+        filtered_data = data
 
     # 写入数据
-    for row_data in data:
+    for row_data in filtered_data:
         row = [row_data.get(header, "") for header in headers]
         if include_profit:
             row.append(row_data.get("利润", ""))
