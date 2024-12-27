@@ -43,7 +43,6 @@ def read_dewu(file_path):
             continue
         data.append({
             "商品货号": row[3],
-            "数量": row[4],
             "规格": row[5],
             "实付金额": row[57],
         })
@@ -85,6 +84,8 @@ def compare_and_calculate(data_stock, data_dewu):
         key = (row_dewu["商品货号"], size)
         if key not in dewu_dict:
             dewu_dict[key] = []
+        # 添加处理状态标记
+        row_dewu["已处理"] = False
         dewu_dict[key].append(row_dewu)
 
     results = []
@@ -94,26 +95,34 @@ def compare_and_calculate(data_stock, data_dewu):
         key = (row_stock["货号"], stock_size)
         
         if key in dewu_dict:
+            result = row_stock.copy()
             stock = int(row_stock["库存"]) if row_stock["库存"] is not None else 0
             remaining_stock = stock
 
             # 处理该商品的所有订单
             for row_dewu in dewu_dict[key]:
+                # 跳过已处理的订单
+                if row_dewu["已处理"]:
+                    continue
+                    
                 cost_price = float(row_stock["成本价"]) if row_stock["成本价"] is not None else 0
                 paid_amount = float(row_dewu["实付金额"]) if row_dewu["实付金额"] is not None else 0
                 
                 difference = round(paid_amount) - round(cost_price)
-                sold_quantity = min(row_dewu["数量"], remaining_stock)
-                remaining_stock -= sold_quantity
+                remaining_stock -= 1  # 每个订单固定减少1个库存
 
-                result = row_stock.copy()
-                result["利润"] = difference * sold_quantity
-                result["库存"] = remaining_stock
-                result["卖出数量"] = sold_quantity
-                results.append(result)
+                if remaining_stock >= 0:  # 只在还有库存时添加结果
+                    result["利润"] = difference
+                    result["库存"] = remaining_stock
+                    result["卖出数量"] = 1
+                    
+                    # 标记订单为已处理
+                    row_dewu["已处理"] = True
 
                 if remaining_stock <= 0:
                     break
+            
+            results.append(result)
         else:
             results.append(row_stock)
 
