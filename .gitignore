@@ -15,7 +15,8 @@ env.bak/
 venv.bak/
 
 # build
-build/dist/
+/build/
+/dist/
 
 # 数据库文件
 
